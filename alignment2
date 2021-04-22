@@ -1,0 +1,23 @@
+#!/bin/sh
+
+#SBATCH --mem=40g
+#SBATCH --cpus-per-task=4
+
+#SBATCH --time=24:30:10
+
+
+gunzip -c SRR13169288_1.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169288_1.fixed.fastq.gz
+gunzip -c SRR13169288_2.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169288_2.fixed.fastq.gz
+
+gunzip -c SRR13169289_1.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169289_1.fixed.fastq.gz
+gunzip -c SRR13169289_2.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169289_2.fixed.fastq.gz
+
+
+
+#### ALIGN TRIMMED READS TO REF ####
+
+
+bwa mem -t 4 -I 200,200,5000 Mus_musculus/Ensembl/GRCm38/Sequence/BWAIndex/genome.fa SRR13169288_1.fixed.fastq.gz SRR13169288_2.fixed.fastq.gz | samtools sort -@ 4 -O bam -T SRR13169288.tmp -o SRR13169288.bam -
+bwa mem -t 4 -I 200,200,5000 Mus_musculus/Ensembl/GRCm38/Sequence/BWAIndex/genome.fa SRR13169289_1.fixed.fastq.gz SRR13169289_2.fixed.fastq.gz | samtools sort -@ 4 -O bam -T SRR13169289.tmp -o SRR13169289.bam -
+
+

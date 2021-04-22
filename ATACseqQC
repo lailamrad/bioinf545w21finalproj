@@ -1,0 +1,91 @@
+#!/bin/sh
+-e
+
+# https://github.com/ParkerLab/bioinf545
+
+#### SET UP VARIABLES #### 
+export LAB_DIR=~/class/projects/bioinf545-2021/group-1/ATACseq
+mkdir -p $LAB_DIR && cd $LAB_DIR
+export LAB_DATA="/class/projects/bioinf545-2021/group-1"
+export REF_DIR=${LAB_DATA}/mus_musculus
+export REF=Mus_musculus.GCRm38.96.gtf
+export PICARD_JAR="/class/data/bio545/atac-seq-lab/bin/picard.jar"
+export R_LIBS_SITE=${LAB_DATA}/R/%p/%v
+
+export PATH=${LAB_DATA}/bin:${LAB_DATA}/ve/bin:$PATH
+
+#### FASTQC ####
+# run Fastqc on ATAC files 
+#fastqc *.fq.gz
+# look at fastqc on firefox 
+#firefox *.html
+
+#### TRIM ADAPTER SEQ READS ####
+trim_adapters SRR13169289_1.fastq.gz SRR1316989_2.fastq.gz
+# compare first few reads in original and trimmed sequence 
+zdiff -u SRR13169289_1.fastq.gz SRR13169289_1.trimmed.fastq.gz | less 
+zdiff -u SRR13169289_2.fastq.gz SRR13169289_2.trimmed.fastq.gz | less
+
+
+trim_adapters SRR13169288_1.fastq.gz SRR1316988_2.fastq.gz
+zdiff -u SRR13169288_1.fastq.gz SRR13169288_1.trimmed.fastq.gz | less 
+zdiff -u SRR13169288_2.fastq.gz SRR13169288_2.trimmed.fastq.gz | less
+
+trim_adapters SRR13169287_1.fastq.gz SRR1316987_2.fastq.gz
+zdiff -u SRR13169287_1.fastq.gz SRR13169287_1.trimmed.fastq.gz | less
+zdiff -u SRR13169287_2.fastq.gz SRR13169287_2.trimmed.fastq.gz | less
+
+trim_adapters SRR131692886_1.fastq.gz SRR1316986_2.fastq.gz
+zdiff -u SRR13169286_1.fastq.gz SRR13169286_1.trimmed.fastq.gz | less
+zdiff -u SRR13169286_2.fastq.gz SRR13169286_2.trimmed.fastq.gz | less
+
+### Rename the paired reads so they match (only if need to rerun alginments for whatever reason) ####
+gunzip -c SRR13169286_1.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169286_1.fixed.fastq.gz
+gunzip -c SRR13169286_2.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169286_2.fixed.fastq.gz
+
+
+gunzip -c SRR13169287_1.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169287_1.fixed.fastq.gz
+gunzip -c SRR13169287_2.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169287_2.fixed.fastq.gz
+
+
+gunzip -c SRR13169288_1.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169288_1.fixed.fastq.gz
+gunzip -c SRR13169288_2.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169288_2.fixed.fastq.gz
+
+gunzip -c SRR13169289_1.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169289_1.fixed.fastq.gz
+gunzip -c SRR13169289_2.fastq.gz | sed -E 's/(^[@+]SRR[0-9]+\.[0-9]+)\.[12]/\1/' | gzip -c > SRR13169289_2.fixed.fastq.gz
+
+
+
+#### ALIGN TRIMMED READS TO REF ####
+bwa mem -t 4 -I 200,200,5000 Mus_musculus/Ensembl/GRCm38/Sequence/BWAIndex/genome.fa SRR13169286_1.fixed.fastq.gz SRR13169286_2.fixed.fastq.gz | samtools sort -@ 4 -O bam -T SRR13169286.tmp -o SRR13169286.bam -
+bwa mem -t 4 -I 200,200,5000 Mus_musculus/Ensembl/GRCm38/Sequence/BWAIndex/genome.fa SRR13169287_1.fixed.fastq.gz SRR13169287_2.fixed.fastq.gz | samtools sort -@ 4 -O bam -T SRR13169287.tmp -o SRR13169287.bam -
+bwa mem -t 4 -I 200,200,5000 Mus_musculus/Ensembl/GRCm38/Sequence/BWAIndex/genome.fa SRR13169288_1.fixed.fastq.gz SRR13169288_2.fixed.fastq.gz | samtools sort -@ 4 -O bam -T SRR13169288.tmp -o SRR13169288.bam -
+bwa mem -t 4 -I 200,200,5000 Mus_musculus/Ensembl/GRCm38/Sequence/BWAIndex/genome.fa SRR13169289_1.fixed.fastq.gz SRR13169289_2.fixed.fastq.gz | samtools sort -@ 4 -O bam -T SRR13169289.tmp -o SRR13169289.bam -
+
+#### SIFT ALIGNED READS #### 
+# check  good alignments 
+java -Xmx8g -jar /class/data/bio545/atac-seq-lab/bin/picard.jar MarkDuplicates I=SRR13169286.bam O=SRR13169286.md.bam ASSUME_SORTED=true METRICS_FILE=SRR13169286.markdup.metrics VALIDATION_STRINGENCY=LENIENT
+
+# index BAM with marked duplicates
+samtools index SRR13169286.md.bam
+
+# sift out good alignments 
+export CHROMOSOMES=$(samtools view -H SRR13169286.md.bam | grep '^@SQ' | cut -f 2 | grep -v -e _ -e chrM -e chrX -e chrY -e 'VN:' | sed 's/SN://' | xargs echo); samtools view -b -h -f 3 -F 4 -F 8 -F 256 -F 1024 -F 2048 -q 30 SRR13169286.md.bam $CHROMOSOMES > SRR13169286.pruned.bam
+
+java -Xmx8g -jar /class/data/bio545/atac-seq-lab/bin/picard.jar MarkDuplicates I=SRR13169287.bam O=SRR13169287.md.bam ASSUME_SORTED=true METRICS_FILE=SRR13169287.markdup.metrics VALIDATION_STRINGENCY=LENIENT
+java -Xmx8g -jar /class/data/bio545/atac-seq-lab/bin/picard.jar MarkDuplicates I=SRR13169288.bam O=SRR13169288.md.bam ASSUME_SORTED=true METRICS_FILE=SRR13169288.markdup.metrics VALIDATION_STRINGENCY=LENIENT
+java -Xmx8g -jar /class/data/bio545/atac-seq-lab/bin/picard.jar MarkDuplicates I=SRR13169289.bam O=SRR13169289.md.bam ASSUME_SORTED=true METRICS_FILE=SRR13169289.markdup.metrics VALIDATION_STRINGENCY=LENIENT
+
+
+samtools index SRR13169287.md.bam
+samtools index SRR13169288.md.bam
+samtools index SRR13169289.md.bam
+
+export CHROMOSOMES=$(samtools view -H SRR13169287.md.bam | grep '^@SQ' | cut -f 2 | grep -v -e _ -e chrM -e chrX -e chrY -e 'VN:' | sed 's/SN://' | xargs echo); samtools view -b -h -f 3 -F 4 -F 8 -F 256 -F 1024 -F 2048 -q 30 SRR13169287.md.bam $CHROMOSOMES > SRR13169287.pruned.bam
+export CHROMOSOMES=$(samtools view -H SRR13169288.md.bam | grep '^@SQ' | cut -f 2 | grep -v -e _ -e chrM -e chrX -e chrY -e 'VN:' | sed 's/SN://' | xargs echo); samtools view -b -h -f 3 -F 4 -F 8 -F 256 -F 1024 -F 2048 -q 30 SRR13169288.md.bam $CHROMOSOMES > SRR13169288.pruned.bam
+export CHROMOSOMES=$(samtools view -H SRR13169289.md.bam | grep '^@SQ' | cut -f 2 | grep -v -e _ -e chrM -e chrX -e chrY -e 'VN:' | sed 's/SN://' | xargs echo); samtools view -b -h -f 3 -F 4 -F 8 -F 256 -F 1024 -F 2048 -q 30 SRR13169289.md.bam $CHROMOSOMES > SRR13169289.pruned.bam
+
+## TO SUBMIT TO SERVER ##
+#!/bin/sh
+#SBATCH --mem=40g
+#SBATCH --cpus-per-task=4
