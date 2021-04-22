@@ -1,0 +1,25 @@
+#!/bin/sh
+
+#SBATCH --mem=40g
+#SBATCH --cpus-per-task=4
+
+#SBATCH --time=24:30:10
+
+module load kentutils
+LC_COLLATE=C sort -k1,1 -k2,2n SRR13169287.broad_treat_pileup.bdg > SRR13169287.broad_treat_pileup.sorted.bdg
+bedClip SRR13169287.broad_treat_pileup.sorted.bdg /class/projects/bioinf545-2021/group-1/mus_musculus/mm10.chrom.sizes.backup.backup.backup.backup SRR13169287.broad_treat_pileup.sorted.plswork.bdg
+bedGraphToBigWig SRR13169287.broad_treat_pileup.sorted.plswork.bdg /class/projects/bioinf545-2021/group-1/mus_musculus/mm10.chrom.sizes.backup.backup.backup.backup SRR13169287.broad_peaks.bw
+
+module load kentutils
+LC_COLLATE=C sort -k1,1 -k2,2n SRR13169288.broad_treat_pileup.bdg > SRR13169288.broad_treat_pileup.sorted.bdg
+bedClip SRR13169288.broad_treat_pileup.sorted.bdg /class/projects/bioinf545-2021/group-1/mus_musculus/mm10.chrom.sizes.backup.backup.backup.backup SRR13169288.broad_treat_pileup.sorted.plswork.bdg
+bedGraphToBigWig SRR13169288.broad_treat_pileup.sorted.plswork.bdg /class/projects/bioinf545-2021/group-1/mus_musculus/mm10.chrom.sizes.backup.backup.backup.backup SRR13169288.broad_peaks.bw
+
+module load kentutils
+LC_COLLATE=C sort -k1,1 -k2,2n SRR13169289.broad_treat_pileup.bdg > SRR13169289.broad_treat_pileup.sorted.bdg
+bedClip SRR13169289.broad_treat_pileup.sorted.bdg /class/projects/bioinf545-2021/group-1/mus_musculus/mm10.chrom.sizes.backup.backup.backup.backup SRR13169289.broad_treat_pileup.sorted.plswork.bdg
+bedGraphToBigWig SRR13169289.broad_treat_pileup.sorted.plswork.bdg /class/projects/bioinf545-2021/group-1/mus_musculus/mm10.chrom.sizes.backup.backup.backup.backup SRR13169289.broad_peaks.bw
+
+
+
+

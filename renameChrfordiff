@@ -1,0 +1,19 @@
+#!/bin/sh
+
+#SBATCH --mem=40g
+#SBATCH --cpus-per-task=4
+
+#SBATCH --time=24:30:10
+
+sed 's/^/chr/' SRR13169286.broad_peaks.broadPeak > SRR13169286.broad_peaks.broadPeakdiff
+sed 's/chrMT/chrM/g' SRR13169286.broad_peaks.broadPeakdiff > SRR13169286.broad_peaks.broadPeakdiff2
+
+sed 's/^/chr/' SRR13169287.broad_peaks.broadPeak > SRR13169287.broad_peaks.broadPeakdiff
+sed 's/chrMT/chrM/g' SRR13169287.broad_peaks.broadPeakdiff > SRR13169287.broad_peaks.broadPeakdiff2
+
+sed 's/^/chr/' SRR13169288.broad_peaks.broadPeak > SRR13169288.broad_peaks.broadPeakdiff
+sed 's/chrMT/chrM/g' SRR13169288.broad_peaks.broadPeakdiff > SRR13169288.broad_peaks.broadPeakdiff2
+
+sed 's/^/chr/' SRR13169289.broad_peaks.broadPeak > SRR13169289.broad_peaks.broadPeakdiff
+sed 's/chrMT/chrM/g' SRR13169289.broad_peaks.broadPeakdiff > SRR13169289.broad_peaks.broadPeakdiff2
+
